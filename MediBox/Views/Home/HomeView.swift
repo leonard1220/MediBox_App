@@ -1,6 +1,21 @@
 import SwiftUI
 import SwiftData
 
+// Helper struct to link a specific dose time to its compartment
+struct ScheduledDose: Comparable, Identifiable {
+    let id = UUID()
+    let time: Date
+    let compartment: Compartment
+    
+    static func < (lhs: ScheduledDose, rhs: ScheduledDose) -> Bool {
+        return lhs.time < rhs.time
+    }
+    
+    static func == (lhs: ScheduledDose, rhs: ScheduledDose) -> Bool {
+        return lhs.time == rhs.time && lhs.compartment.id == rhs.compartment.id
+    }
+}
+
 struct HomeView: View {
     @Query private var compartments: [Compartment]
     @State private var currentTime = Date()
@@ -10,21 +25,21 @@ struct HomeView: View {
     // Neon Colors
     let neonBlue = Color(red: 0, green: 1, blue: 1)
     let neonRed = Color(red: 1, green: 0.2, blue: 0.2)
+    let neonYellow = Color(red: 1, green: 1, blue: 0)
     
-    private var allDoses: [Date] {
-        var doses: [Date] = []
+    private var allDoses: [ScheduledDose] {
+        var doses: [ScheduledDose] = []
         for compartment in compartments {
             for time in compartment.scheduledTimes {
-                // Normalize to today to ensure correct sorting relative to now
                 if let todayTime = normalizeToToday(date: time) {
-                    doses.append(todayTime)
+                    doses.append(ScheduledDose(time: todayTime, compartment: compartment))
                 }
             }
         }
         return doses.sorted()
     }
     
-    private var nextDose: Date? {
+    private var nextDose: ScheduledDose? {
         if simulatedTakenCount < allDoses.count {
             return allDoses[simulatedTakenCount]
         }
@@ -35,11 +50,15 @@ struct HomeView: View {
         return !allDoses.isEmpty && simulatedTakenCount >= allDoses.count
     }
     
+    private var lowStockCompartments: [Compartment] {
+        compartments.filter { $0.currentQuantity <= $0.lowStockThreshold }
+    }
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 40) {
+            VStack(spacing: 30) {
                 // 1. Clock
                 VStack(spacing: 12) {
                     Text(currentTime, style: .time)
@@ -51,7 +70,7 @@ struct HomeView: View {
                         .font(.title3)
                         .foregroundColor(.gray)
                 }
-                .padding(.top, 50)
+                .padding(.top, 40)
                 
                 // 2. Next Dose Info
                 VStack(spacing: 8) {
@@ -65,12 +84,16 @@ struct HomeView: View {
                             .foregroundColor(neonBlue)
                             .shadow(color: neonBlue, radius: 10)
                     } else if let next = nextDose {
-                        Text(next, style: .time)
+                        Text(next.time, style: .time)
                             .font(.system(size: 40, weight: .bold))
                             .foregroundColor(neonRed)
                             .shadow(color: neonRed, radius: 10)
                         
-                        Text("in " + timeUntil(next))
+                        Text(next.compartment.medicationName ?? "Compartment \(next.compartment.id)")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("in " + timeUntil(next.time))
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     } else {
@@ -82,8 +105,6 @@ struct HomeView: View {
                             .foregroundColor(.gray)
                     }
                 }
-                
-                Spacer()
                 
                 // 3. Interactive Progress Widget
                 VStack(spacing: 20) {
@@ -135,14 +156,59 @@ struct HomeView: View {
                     .frame(height: 60)
                     .padding(.horizontal, 40)
                     .onTapGesture {
-                        simulateTakingDose()
+                        takeDoseAction()
                     }
                     
                     Text("Tap bar to simulate taking dose")
                         .font(.caption)
                         .foregroundColor(.gray.opacity(0.5))
                 }
-                .padding(.bottom, 60)
+                
+                Spacer()
+                
+                // 4. Alerts Section
+                if !lowStockCompartments.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "bell.fill")
+                                .foregroundColor(neonYellow)
+                            Text("Alerts")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 15) {
+                                ForEach(lowStockCompartments) { compartment in
+                                    HStack {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.black)
+                                            .frame(width: 30, height: 30)
+                                            .background(neonYellow)
+                                            .clipShape(Circle())
+                                        
+                                        VStack(alignment: .leading) {
+                                            Text(compartment.medicationName ?? "Compartment \(compartment.id)")
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.black)
+                                            Text("Low Stock: \(compartment.currentQuantity)")
+                                                .font(.caption2)
+                                                .foregroundColor(.black)
+                                        }
+                                    }
+                                    .padding()
+                                    .background(neonYellow.opacity(0.8))
+                                    .cornerRadius(10)
+                                    .shadow(color: neonYellow.opacity(0.5), radius: 5)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.bottom, 20)
+                }
             }
         }
         .onReceive(timer) { input in
@@ -157,7 +223,7 @@ struct HomeView: View {
     }
     
     private func calculateWidth(totalWidth: CGFloat, type: ProgressType) -> CGFloat {
-        let total = max(allDoses.count, 1) // Avoid division by zero
+        let total = max(allDoses.count, 1)
         let taken = simulatedTakenCount
         let unitWidth = totalWidth / CGFloat(total)
         
@@ -169,8 +235,19 @@ struct HomeView: View {
         }
     }
     
-    private func simulateTakingDose() {
+    private func takeDoseAction() {
         guard !isCompleted else { return }
+        
+        // 1. Identify current dose to take
+        let doseToTake = allDoses[simulatedTakenCount]
+        
+        // 2. Decrement inventory
+        let compartment = doseToTake.compartment
+        if compartment.currentQuantity > 0 {
+            compartment.currentQuantity -= 1
+        }
+        
+        // 3. Update simulation state
         withAnimation(.spring()) {
             simulatedTakenCount += 1
         }

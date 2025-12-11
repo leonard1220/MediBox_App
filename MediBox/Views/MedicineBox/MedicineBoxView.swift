@@ -55,6 +55,34 @@ struct CompartmentRow: View {
                     .foregroundColor(.black)
                 }
                 
+                // Inventory Management
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Inventory / 库存")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    HStack {
+                        Image(systemName: "pills.circle.fill")
+                            .foregroundColor(.orange)
+                        Text("Current Stock: \(compartment.currentQuantity)")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Stepper("", value: Bindable(compartment).currentQuantity, in: 0...999)
+                            .labelsHidden()
+                    }
+                    
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        Text("Alert Threshold: \(compartment.lowStockThreshold)")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Stepper("", value: Bindable(compartment).lowStockThreshold, in: 0...100)
+                            .labelsHidden()
+                    }
+                }
+                .padding(.vertical, 4)
+                
                 // Scheduled Times
                 VStack(alignment: .leading) {
                     HStack {
