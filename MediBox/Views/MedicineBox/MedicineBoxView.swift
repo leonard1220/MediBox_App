@@ -39,7 +39,6 @@ struct CompartmentRow: View {
                         set: { compartment.medicationName = $0 }
                     ))
                     .textFieldStyle(.roundedBorder)
-                    // Removed .foregroundColor(.black) to fix visibility issues
                 }
                 
                 // Dosage
@@ -52,7 +51,6 @@ struct CompartmentRow: View {
                         set: { compartment.dosage = $0 }
                     ))
                     .textFieldStyle(.roundedBorder)
-                    // Removed .foregroundColor(.black)
                 }
                 
                 // Instruction
@@ -110,7 +108,8 @@ struct CompartmentRow: View {
                             .foregroundColor(.gray)
                         Spacer()
                         Button(action: {
-                            compartment.scheduledTimes.append(Date())
+                            // Safe Append: explicit assignment triggers update
+                            addTime()
                         }) {
                             Image(systemName: "plus.circle.fill")
                                 .foregroundColor(.cyan)
@@ -121,11 +120,18 @@ struct CompartmentRow: View {
                         HStack {
                             DatePicker(
                                 "Time \(index + 1)",
-                                selection: $compartment.scheduledTimes[index],
+                                selection: Binding(
+                                    get: { compartment.scheduledTimes[index] },
+                                    set: { newTime in
+                                        var times = compartment.scheduledTimes
+                                        times[index] = newTime
+                                        compartment.scheduledTimes = times
+                                    }
+                                ),
                                 displayedComponents: .hourAndMinute
                             )
                             .labelsHidden()
-                            .colorScheme(.dark) // Ensure picker looks good
+                            .colorScheme(.dark)
                             
                             Spacer()
                             
@@ -167,8 +173,17 @@ struct CompartmentRow: View {
         .listRowBackground(Color(hue: 0, saturation: 0, brightness: 0.1)) // Dark row background
     }
     
+    private func addTime() {
+        // Explicitly creating a new array to ensure change tracking works
+        var times = compartment.scheduledTimes
+        times.append(Date())
+        compartment.scheduledTimes = times
+    }
+    
     private func removeTime(at index: Int) {
-        compartment.scheduledTimes.remove(at: index)
+        var times = compartment.scheduledTimes
+        times.remove(at: index)
+        compartment.scheduledTimes = times
     }
 }
 
