@@ -302,8 +302,9 @@ struct HomeView: View {
             compartment.currentQuantity -= 1
         }
         
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        // Enhanced Feedback
+        HapticManager.shared.success()
+        AudioManager.shared.playSuccess()
         
         withAnimation(.spring()) {
             simulatedTakenCount += 1
