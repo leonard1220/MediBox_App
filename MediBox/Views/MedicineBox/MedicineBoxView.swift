@@ -55,6 +55,21 @@ struct CompartmentRow: View {
                     .foregroundColor(.black)
                 }
                 
+                // Instruction
+                VStack(alignment: .leading) {
+                    Text("Instruction / 指导")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Picker("Instruction", selection: Bindable(compartment).instruction) {
+                        ForEach(MedicationInstruction.allCases, id: \.self) { instruction in
+                            Text(instruction.rawValue).tag(instruction)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .accentColor(.cyan)
+                }
+                
                 // Inventory Management
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Inventory / 库存")

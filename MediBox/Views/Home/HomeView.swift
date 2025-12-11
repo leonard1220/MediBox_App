@@ -84,18 +84,29 @@ struct HomeView: View {
                             .foregroundColor(neonBlue)
                             .shadow(color: neonBlue, radius: 10)
                     } else if let next = nextDose {
-                        Text(next.time, style: .time)
-                            .font(.system(size: 40, weight: .bold))
-                            .foregroundColor(neonRed)
-                            .shadow(color: neonRed, radius: 10)
-                        
-                        Text(next.compartment.medicationName ?? "Compartment \(next.compartment.id)")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        
-                        Text("in " + timeUntil(next.time))
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+                        VStack(spacing: 4) {
+                            Text(next.time, style: .time)
+                                .font(.system(size: 40, weight: .bold))
+                                .foregroundColor(neonRed)
+                                .shadow(color: neonRed, radius: 10)
+                            
+                            HStack {
+                                Text(next.compartment.medicationName ?? "Compartment \(next.compartment.id)")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                if next.compartment.instruction != .none {
+                                    Text("• \(next.compartment.instruction.rawValue)")
+                                        .font(.headline)
+                                        .foregroundColor(neonBlue)
+                                        .shadow(color: neonBlue, radius: 5)
+                                }
+                            }
+                            
+                            Text("in " + timeUntil(next.time))
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
                     } else {
                         Text("--:--")
                             .font(.system(size: 40, weight: .bold))
