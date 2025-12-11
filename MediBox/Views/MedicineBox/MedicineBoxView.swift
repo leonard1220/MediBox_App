@@ -23,6 +23,7 @@ struct MedicineBoxView: View {
 }
 
 struct CompartmentRow: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var compartment: Compartment
     @State private var isExpanded: Bool = false
     
@@ -115,12 +116,12 @@ struct CompartmentRow: View {
                         }
                     }
                     
-                    // Fixed: Iterating over Identifiable TimeSlot structs
-                    ForEach($compartment.scheduledTimes) { $timeSlot in
+                    // Iterate over the relationship array
+                    ForEach(compartment.schedules.sorted(by: { $0.time < $1.time })) { schedule in
                         HStack {
                             DatePicker(
                                 "Time",
-                                selection: $timeSlot.time,
+                                selection: Bindable(schedule).time,
                                 displayedComponents: .hourAndMinute
                             )
                             .labelsHidden()
@@ -129,7 +130,7 @@ struct CompartmentRow: View {
                             Spacer()
                             
                             Button(action: {
-                                removeTime(id: timeSlot.id)
+                                removeTime(schedule)
                             }) {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
@@ -167,16 +168,20 @@ struct CompartmentRow: View {
     }
     
     private func addTime() {
-        // Appending Identifiable struct ensures unique ID and proper List update
-        withAnimation {
-            compartment.scheduledTimes.append(TimeSlot())
-        }
+        let newSchedule = Schedule(time: Date())
+        modelContext.insert(newSchedule)
+        newSchedule.compartment = compartment
+        // Relationship update happens automatically or via direct append
+        compartment.schedules.append(newSchedule)
     }
     
-    private func removeTime(id: UUID) {
-        withAnimation {
-            compartment.scheduledTimes.removeAll { $0.id == id }
+    private func removeTime(_ schedule: Schedule) {
+        // Remove from relationship first for UI consistency
+        if let index = compartment.schedules.firstIndex(where: { $0.id == schedule.id }) {
+             compartment.schedules.remove(at: index)
         }
+        // Then delete from context
+        modelContext.delete(schedule)
     }
 }
 

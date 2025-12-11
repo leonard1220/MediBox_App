@@ -9,11 +9,11 @@ enum MedicationInstruction: String, CaseIterable, Codable {
     case beforeSleep = "Before Sleep"
 }
 
-struct TimeSlot: Identifiable, Codable, Equatable {
-    var id: UUID = UUID()
+@Model
+final class Schedule {
     var time: Date
+    var compartment: Compartment?
     
-    // Explicit init for clarity
     init(time: Date = Date()) {
         self.time = time
     }
@@ -24,8 +24,11 @@ final class Compartment {
     @Attribute(.unique) var id: Int
     var medicationName: String?
     var dosage: String?
-    // Schema Change: [Date] -> [TimeSlot]
-    var scheduledTimes: [TimeSlot]
+    
+    // Relationship to Schedules
+    @Relationship(deleteRule: .cascade, inverse: \Schedule.compartment)
+    var schedules: [Schedule] = []
+    
     var currentQuantity: Int
     var lowStockThreshold: Int
     var instruction: MedicationInstruction
@@ -33,14 +36,12 @@ final class Compartment {
     init(id: Int, 
          medicationName: String? = nil, 
          dosage: String? = nil, 
-         scheduledTimes: [TimeSlot] = [], 
          currentQuantity: Int = 30, 
          lowStockThreshold: Int = 5,
          instruction: MedicationInstruction = .none) {
         self.id = id
         self.medicationName = medicationName
         self.dosage = dosage
-        self.scheduledTimes = scheduledTimes
         self.currentQuantity = currentQuantity
         self.lowStockThreshold = lowStockThreshold
         self.instruction = instruction

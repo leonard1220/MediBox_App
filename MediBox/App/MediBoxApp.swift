@@ -9,7 +9,8 @@ struct MediBoxApp: App {
         do {
             let schema = Schema([
                 Medication.self,
-                Compartment.self
+                Compartment.self,
+                Schedule.self // Added Schedule to Schema
             ])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: [modelConfiguration])
