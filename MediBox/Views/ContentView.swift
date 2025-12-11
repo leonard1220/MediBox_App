@@ -1,16 +1,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    // Neon Cyan Accent Color
+    // RGB: 0, 255, 255
+    let cyanAccent = Color(red: 0, green: 1, blue: 1)
+
     var body: some View {
         TabView {
-            TodayView()
+            HomeView()
                 .tabItem {
-                    Label("Today", systemImage: "pill.fill")
+                    Label("Home", systemImage: "house.fill")
                 }
             
-            MedicationListView()
+            MedicineBoxView()
                 .tabItem {
-                    Label("My Meds", systemImage: "list.bullet.rectangle.portrait.fill")
+                    Label("Med Box", systemImage: "archivebox.fill")
                 }
             
             SettingsView()
@@ -18,12 +22,11 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
         }
-        .tint(.teal) // Health-focused accent color
+        .tint(cyanAccent)
+        .preferredColorScheme(.dark)
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView()
 }

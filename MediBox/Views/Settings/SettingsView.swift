@@ -3,17 +3,22 @@ import SwiftUI
 struct SettingsView: View {
     var body: some View {
         NavigationStack {
-            List {
-                Section(header: Text("General")) {
-                    Text("Notifications")
-                    Text("Appearance")
+            ZStack {
+                Color.black.edgesIgnoringSafeArea(.all)
+                List {
+                    Section(header: Text("General")) {
+                        Text("Notifications")
+                        Text("Appearance")
+                    }
+                    
+                    Section(header: Text("About")) {
+                        Text("Version 1.0.0")
+                    }
                 }
-                
-                Section(header: Text("About")) {
-                    Text("Version 1.0.0")
-                }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -21,5 +26,6 @@ struct SettingsView: View {
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView()
+            .preferredColorScheme(.dark)
     }
 }
