@@ -178,6 +178,45 @@ struct HomeView: View {
                 )
                 .padding(.horizontal, 25)
                 
+                // 4. Upcoming Doses List
+                if simulatedTakenCount + 1 < allDoses.count {
+                    VStack(alignment: .leading, spacing: 15) {
+                        Text("UPCOMING")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 30)
+                            .padding(.top, 20)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 15) {
+                                ForEach(allDoses.dropFirst(simulatedTakenCount + 1)) { dose in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(timeString(dose.time))
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                        
+                                        Text(dose.compartment.medicationName ?? "Medicine")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .lineLimit(1)
+                                        
+                                        Text(dose.compartment.dosage ?? "")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(16)
+                                    .frame(width: 140, alignment: .leading)
+                                    .background(Color(white: 0.12))
+                                    .cornerRadius(20)
+                                }
+                            }
+                            .padding(.horizontal, 25)
+                        }
+                    }
+                }
+                
                 Spacer()
                 
                 // Reset (Hidden)
