@@ -27,7 +27,7 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
         }
-        .tint(cyanAccent)
+        .tint(.cyan)
         .preferredColorScheme(.dark)
     }
 }
