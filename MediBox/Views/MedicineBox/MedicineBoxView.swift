@@ -39,7 +39,7 @@ struct CompartmentRow: View {
                         set: { compartment.medicationName = $0 }
                     ))
                     .textFieldStyle(.roundedBorder)
-                    .foregroundColor(.black) 
+                    // Removed .foregroundColor(.black) to fix visibility issues
                 }
                 
                 // Dosage
@@ -52,7 +52,7 @@ struct CompartmentRow: View {
                         set: { compartment.dosage = $0 }
                     ))
                     .textFieldStyle(.roundedBorder)
-                    .foregroundColor(.black)
+                    // Removed .foregroundColor(.black)
                 }
                 
                 // Instruction
@@ -117,7 +117,7 @@ struct CompartmentRow: View {
                         }
                     }
                     
-                    ForEach(Array(compartment.scheduledTimes.enumerated()), id: \.element) { index, _ in
+                    ForEach(compartment.scheduledTimes.indices, id: \.self) { index in
                         HStack {
                             DatePicker(
                                 "Time \(index + 1)",

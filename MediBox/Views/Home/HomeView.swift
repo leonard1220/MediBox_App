@@ -61,6 +61,19 @@ struct HomeView: View {
             VStack(spacing: 30) {
                 // 1. Clock
                 VStack(spacing: 12) {
+                    HStack {
+                         Spacer()
+                         Button(action: {
+                             simulatedTakenCount = 0
+                         }) {
+                             Image(systemName: "arrow.counterclockwise")
+                                 .font(.title2)
+                                 .foregroundColor(.gray)
+                                 .padding(.trailing, 20)
+                         }
+                    }
+                    .padding(.top, 10)
+                    
                     Text(currentTime, style: .time)
                         .font(.system(size: 60, weight: .thin, design: .monospaced))
                         .foregroundColor(.white)
@@ -70,7 +83,7 @@ struct HomeView: View {
                         .font(.title3)
                         .foregroundColor(.gray)
                 }
-                .padding(.top, 40)
+                .padding(.top, 10)
                 
                 // 2. Next Dose Info
                 VStack(spacing: 8) {
