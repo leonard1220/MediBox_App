@@ -25,8 +25,14 @@ struct HomeView: View {
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     // Gradients
-    let neonGradient = LinearGradient(
-        colors: [Color(red: 1, green: 0.2, blue: 0.3), Color(red: 0, green: 0.8, blue: 1)],
+    let redGradient = LinearGradient(
+        colors: [Color(red: 1, green: 0, blue: 0.2), Color(red: 1, green: 0.3, blue: 0.3)],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    
+    let blueGradient = LinearGradient(
+        colors: [Color(red: 0, green: 0.6, blue: 1), Color(red: 0, green: 0.8, blue: 1)],
         startPoint: .leading,
         endPoint: .trailing
     )
@@ -41,7 +47,6 @@ struct HomeView: View {
     private var allDoses: [ScheduledDose] {
         var doses: [ScheduledDose] = []
         for compartment in compartments {
-            // Update: Access .time from TimeSlot struct
             for timeSlot in compartment.scheduledTimes {
                 if let todayTime = normalizeToToday(date: timeSlot.time) {
                     doses.append(ScheduledDose(time: todayTime, compartment: compartment))
@@ -53,16 +58,9 @@ struct HomeView: View {
     
     private var nextDose: ScheduledDose? {
         if simulatedTakenCount < allDoses.count {
-            return allDoses[simulatedTakenCount] // The very next one
+            return allDoses[simulatedTakenCount]
         }
         return nil
-    }
-    
-    private var upcomingDoses: [ScheduledDose] {
-        if simulatedTakenCount + 1 < allDoses.count {
-            return Array(allDoses.dropFirst(simulatedTakenCount + 1))
-        }
-        return []
     }
     
     private var isCompleted: Bool {
@@ -74,80 +72,83 @@ struct HomeView: View {
             // Background
             backgroundGradient.ignoresSafeArea()
             
-            VStack {
-                // Header
-                Text("MediBox")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.gray)
-                    .padding(.top, 10)
+            VStack(spacing: 0) {
+                // Top Spacer
+                Spacer().frame(height: 50)
                 
-                Spacer().frame(height: 30)
-                
-                // Clock
+                // 1. Current Time (Top)
                 Text(currentTime, style: .time)
-                    .font(.system(size: 80, weight: .regular))
+                    .font(.system(size: 70, weight: .semibold, design: .default))
                     .foregroundColor(.white)
+                    .padding(.bottom, 10)
                 
-                // Sub-header (Status)
-                VStack(spacing: 5) {
+                // 2. Info Line: "Compartment X · Med Name"
+                if isCompleted {
+                    Text("All Completed")
+                        .font(.title3)
+                        .foregroundColor(.blue.opacity(0.8))
+                } else if let next = nextDose {
+                    Text("Compartment \(next.compartment.id) · \(next.compartment.medicationName ?? "Medicine")")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                    if let dosage = next.compartment.dosage {
+                        Text("Take \(dosage)")
+                            .font(.body)
+                            .foregroundColor(.gray)
+                            .padding(.top, 4)
+                    }
+                } else {
+                    Text("No Schedule")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                }
+                
+                Spacer().frame(height: 40)
+                
+                // 3. Main Card
+                VStack(spacing: 20) {
+                    // Schedule Info
                     if let next = nextDose {
-                        Text("Compartment \(next.compartment.id)")
-                            .font(.title2)
+                        Text("Scheduled Dose: \(timeString(next.time)) • Today")
+                            .font(.headline)
                             .foregroundColor(.white)
-                        if let dosage = next.compartment.dosage, !dosage.isEmpty {
-                            Text("Take \(dosage)")
-                                .font(.body)
-                                .foregroundColor(.gray)
-                        } else {
-                            Text("Scheduled Dose")
-                                .font(.body)
-                                .foregroundColor(.gray)
-                        }
                     } else if isCompleted {
-                        Text("All Doses Taken")
-                            .font(.title2)
-                            .foregroundColor(.green)
+                        Text("Schedule Clean")
+                            .font(.headline)
+                            .foregroundColor(.white)
                     } else {
-                        Text("No Schedule")
-                            .font(.title2)
+                        Text("No upcoming dose")
+                            .font(.headline)
                             .foregroundColor(.gray)
                     }
-                }
-                .padding(.bottom, 40)
-                
-                // Glowing Card
-                VStack(spacing: 0) {
-                    HStack {
-                        if let next = nextDose {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Scheduled Dose: \(timeString(next.time)) • Today")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                            }
-                        } else {
-                            Text("No upcoming dose")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        Spacer()
+
+                    // Completed Text (Only if completed)
+                    if isCompleted {
+                        Text("COMPLETED")
+                            .font(.caption)
+                            .fontWeight(.black)
+                            .tracking(2)
+                            .foregroundColor(.blue)
+                            .transition(.opacity)
                     }
-                    .padding(.bottom, 20)
                     
-                    // Progress Bar
+                    // Light Bar (Red background = Untaken, Blue foreground = Taken)
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
+                            // Track (Red - Untaken)
                             Capsule()
-                                .fill(Color.white.opacity(0.1))
+                                .fill(isCompleted ? Color.black : Color.red.opacity(0.8)) // Fade red if done
                                 .frame(height: 12)
+                                .shadow(color: .red.opacity(0.5), radius: 8)
                             
+                            // Fill (Blue - Taken)
                             if !allDoses.isEmpty {
                                 let total = allDoses.count
                                 let progress = CGFloat(simulatedTakenCount) / CGFloat(total)
                                 Capsule()
-                                    .fill(neonGradient)
-                                    .frame(width: max(12, geometry.size.width * progress), height: 12)
-                                    .shadow(color: .blue.opacity(0.5), radius: 8)
+                                    .fill(blueGradient)
+                                    .frame(width: max(0, geometry.size.width * progress), height: 12)
+                                    .shadow(color: .blue.opacity(0.8), radius: 10)
                                     .animation(.spring(), value: simulatedTakenCount)
                             }
                         }
@@ -157,61 +158,36 @@ struct HomeView: View {
                         takeDoseAction()
                     }
                 }
-                .padding(25)
+                .padding(30)
                 .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color(white: 0.1))
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color(white: 0.08))
                         .shadow(color: .white.opacity(0.05), radius: 10, x: 0, y: 5)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 25)
+                            RoundedRectangle(cornerRadius: 30)
+                                // Outer Neon Ring: Blue if completed, else Gradient Red/Blue
                                 .stroke(
-                                    LinearGradient(colors: [.red.opacity(0.8), .blue.opacity(0.8)], startPoint: .leading, endPoint: .trailing),
-                                    lineWidth: 1.5
+                                    isCompleted ?
+                                        LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom) :
+                                        LinearGradient(colors: [.red, .blue], startPoint: .leading, endPoint: .trailing),
+                                    lineWidth: 2
                                 )
-                                .shadow(color: .blue.opacity(0.3), radius: 10)
+                                .shadow(color: isCompleted ? .blue.opacity(0.6) : .purple.opacity(0.4), radius: 15)
                         )
                 )
-                .padding(.horizontal, 20)
-                .padding(.bottom, 40)
-                
-                // Upcoming List
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("Upcoming Dose")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.leading, 20)
-                    
-                    ScrollView {
-                        VStack(spacing: 12) {
-                            ForEach(upcomingDoses) { dose in
-                                HStack {
-                                    Text("\(timeString(dose.time)) - \(dose.compartment.medicationName ?? "Compartment \(dose.compartment.id)")")
-                                        .foregroundColor(.white.opacity(0.9))
-                                    if let d = dose.compartment.dosage {
-                                        Text("(\(d))")
-                                            .foregroundColor(.gray)
-                                    }
-                                    Spacer()
-                                }
-                                .padding()
-                                .background(Color(white: 0.12))
-                                .cornerRadius(12)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                }
+                .padding(.horizontal, 25)
                 
                 Spacer()
                 
-                // Reset Button (Hidden/Subtle)
+                // Reset (Hidden)
                 Button(action: {
                     withAnimation { simulatedTakenCount = 0 }
                     HapticManager.shared.warning()
                 }) {
                     Image(systemName: "arrow.counterclockwise")
-                        .foregroundColor(.gray.opacity(0.5))
-                        .padding()
+                        .font(.title)
+                        .foregroundColor(.gray.opacity(0.3))
+                        .padding(.bottom, 20)
                 }
             }
         }
@@ -219,7 +195,6 @@ struct HomeView: View {
             currentTime = input
         }
     }
-    
     
     // MARK: - Logic
     
@@ -253,9 +228,4 @@ struct HomeView: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
-}
-
-#Preview {
-    HomeView()
-        .modelContainer(for: Compartment.self, inMemory: true)
 }
