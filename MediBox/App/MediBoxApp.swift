@@ -15,8 +15,9 @@ struct MediBoxApp: App {
             container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
             // Pre-populate Compartments if empty
+            let localContainer = container
             Task { @MainActor in
-                let context = container.mainContext
+                let context = localContainer.mainContext
                 let descriptor = FetchDescriptor<Compartment>()
                 let count = try? context.fetchCount(descriptor)
                 
