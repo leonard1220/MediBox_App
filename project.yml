@@ -1,0 +1,20 @@
+name: MediBox
+options:
+  bundleIdPrefix: com.medibox
+targets:
+  MediBox:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - MediBox
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      CURRENT_PROJECT_VERSION: 1
+      MARKETING_VERSION: 1.0.0
+      PRODUCT_BUNDLE_IDENTIFIER: com.medibox.app
+      INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+      INFOPLIST_KEY_UILaunchScreen_Generation: YES
+      # Build Settings for SwiftUI
+      SWIFT_VERSION: 5.0
+      ENABLE_PREVIEWS: YES

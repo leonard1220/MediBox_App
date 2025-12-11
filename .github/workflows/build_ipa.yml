@@ -1,0 +1,45 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            -project MediBox.xcodeproj \
+            -scheme MediBox \
+            -destination "generic/platform=iOS" \
+            -archivePath MediBox.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Export IPA (Payload Method)
+        run: |
+          mkdir Payload
+          # The app path inside the archive varies, usually Products/Applications/AppName.app
+          cp -r MediBox.xcarchive/Products/Applications/MediBox.app Payload/
+          zip -r MediBox.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediBox-IPA
+          path: MediBox.ipa
