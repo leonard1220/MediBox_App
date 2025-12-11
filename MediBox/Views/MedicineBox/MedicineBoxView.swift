@@ -108,7 +108,6 @@ struct CompartmentRow: View {
                             .foregroundColor(.gray)
                         Spacer()
                         Button(action: {
-                            // Safe Append: explicit assignment triggers update
                             addTime()
                         }) {
                             Image(systemName: "plus.circle.fill")
@@ -116,18 +115,12 @@ struct CompartmentRow: View {
                         }
                     }
                     
-                    ForEach(compartment.scheduledTimes.indices, id: \.self) { index in
+                    // Fixed: Iterating over Identifiable TimeSlot structs
+                    ForEach($compartment.scheduledTimes) { $timeSlot in
                         HStack {
                             DatePicker(
-                                "Time \(index + 1)",
-                                selection: Binding(
-                                    get: { compartment.scheduledTimes[index] },
-                                    set: { newTime in
-                                        var times = compartment.scheduledTimes
-                                        times[index] = newTime
-                                        compartment.scheduledTimes = times
-                                    }
-                                ),
+                                "Time",
+                                selection: $timeSlot.time,
                                 displayedComponents: .hourAndMinute
                             )
                             .labelsHidden()
@@ -136,7 +129,7 @@ struct CompartmentRow: View {
                             Spacer()
                             
                             Button(action: {
-                                removeTime(at: index)
+                                removeTime(id: timeSlot.id)
                             }) {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
@@ -174,16 +167,16 @@ struct CompartmentRow: View {
     }
     
     private func addTime() {
-        // Explicitly creating a new array to ensure change tracking works
-        var times = compartment.scheduledTimes
-        times.append(Date())
-        compartment.scheduledTimes = times
+        // Appending Identifiable struct ensures unique ID and proper List update
+        withAnimation {
+            compartment.scheduledTimes.append(TimeSlot())
+        }
     }
     
-    private func removeTime(at index: Int) {
-        var times = compartment.scheduledTimes
-        times.remove(at: index)
-        compartment.scheduledTimes = times
+    private func removeTime(id: UUID) {
+        withAnimation {
+            compartment.scheduledTimes.removeAll { $0.id == id }
+        }
     }
 }
 

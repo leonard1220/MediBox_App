@@ -41,8 +41,9 @@ struct HomeView: View {
     private var allDoses: [ScheduledDose] {
         var doses: [ScheduledDose] = []
         for compartment in compartments {
-            for time in compartment.scheduledTimes {
-                if let todayTime = normalizeToToday(date: time) {
+            // Update: Access .time from TimeSlot struct
+            for timeSlot in compartment.scheduledTimes {
+                if let todayTime = normalizeToToday(date: timeSlot.time) {
                     doses.append(ScheduledDose(time: todayTime, compartment: compartment))
                 }
             }

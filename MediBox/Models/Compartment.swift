@@ -9,12 +9,23 @@ enum MedicationInstruction: String, CaseIterable, Codable {
     case beforeSleep = "Before Sleep"
 }
 
+struct TimeSlot: Identifiable, Codable, Equatable {
+    var id: UUID = UUID()
+    var time: Date
+    
+    // Explicit init for clarity
+    init(time: Date = Date()) {
+        self.time = time
+    }
+}
+
 @Model
 final class Compartment {
     @Attribute(.unique) var id: Int
     var medicationName: String?
     var dosage: String?
-    var scheduledTimes: [Date]
+    // Schema Change: [Date] -> [TimeSlot]
+    var scheduledTimes: [TimeSlot]
     var currentQuantity: Int
     var lowStockThreshold: Int
     var instruction: MedicationInstruction
@@ -22,7 +33,7 @@ final class Compartment {
     init(id: Int, 
          medicationName: String? = nil, 
          dosage: String? = nil, 
-         scheduledTimes: [Date] = [], 
+         scheduledTimes: [TimeSlot] = [], 
          currentQuantity: Int = 30, 
          lowStockThreshold: Int = 5,
          instruction: MedicationInstruction = .none) {
