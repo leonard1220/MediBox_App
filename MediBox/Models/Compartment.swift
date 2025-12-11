@@ -3,10 +3,10 @@ import SwiftData
 
 enum MedicationInstruction: String, CaseIterable, Codable {
     case none = "None"
-    case beforeMeal = "Before Meal / 饭前"
-    case afterMeal = "After Meal / 饭后"
-    case withFood = "With Food / 随餐"
-    case beforeSleep = "Before Sleep / 睡前"
+    case beforeMeal = "Before Meal"
+    case afterMeal = "After Meal"
+    case withFood = "With Food"
+    case beforeSleep = "Before Sleep"
 }
 
 @Model

@@ -19,7 +19,7 @@ struct ContentView: View {
             
             StatisticsView()
                 .tabItem {
-                    Label("Stats / 统计", systemImage: "chart.bar.fill")
+                    Label("Stats", systemImage: "chart.bar.fill")
                 }
             
             SettingsView()

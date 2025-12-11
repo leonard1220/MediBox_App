@@ -65,7 +65,7 @@ struct StatisticsView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Weekly Report / 本周简报")
+            .navigationTitle("Weekly Report")
         }
     }
     

@@ -5,17 +5,15 @@ struct SettingsView: View {
         NavigationStack {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
-                List {
-                    Section(header: Text("General")) {
-                        Text("Notifications")
-                        Text("Appearance")
-                    }
-                    
-                    Section(header: Text("About")) {
-                        Text("Version 1.0.0")
-                    }
+                VStack {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray)
+                        .padding()
+                    Text("Settings Not Implemented Yet")
+                        .font(.title2)
+                        .foregroundColor(.gray)
                 }
-                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
