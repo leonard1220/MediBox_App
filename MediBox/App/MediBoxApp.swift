@@ -15,17 +15,6 @@ struct MediBoxApp: App {
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
-            // Pre-populate Compartments if empty
-            let localContainer = container
-            Task { @MainActor in
-                let context = localContainer.mainContext
-                let descriptor = FetchDescriptor<Compartment>()
-                let count = try? context.fetchCount(descriptor)
-                
-                if count == 0 {
-                    populateSampleData(context: context)
-                }
-            }
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -84,5 +73,20 @@ struct MediBoxApp: App {
                 .preferredColorScheme(.dark)
         }
         .modelContainer(container)
+        .task {
+            // Pre-populate Compartments if empty
+            let context = container.mainContext
+            let descriptor = FetchDescriptor<Compartment>()
+            let count = try? context.fetchCount(descriptor)
+            
+            if count == 0 {
+                // Ensure UI updates happen on main actor if populateSampleData interacts with UI state,
+                // though here it just uses context which is actor-isolated or MainActor bound.
+                // populateSampleData is marked @MainActor, so we should await it properly or run on main actor.
+                // Since .task inherits context, and if attached to View it is on MainActor? 
+                // .task on a View runs on the MainActor by default.
+                populateSampleData(context: context)
+            }
+        }
     }
 }
