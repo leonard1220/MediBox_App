@@ -17,6 +17,11 @@ struct ContentView: View {
                     Label("Med Box", systemImage: "archivebox.fill")
                 }
             
+            StatisticsView()
+                .tabItem {
+                    Label("Stats / 统计", systemImage: "chart.bar.fill")
+                }
+            
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
