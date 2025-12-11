@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct TodayView: View {
+    @State private var isShowingAddSheet = false
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -22,6 +24,18 @@ struct TodayView: View {
                     .padding(.top, 4)
             }
             .navigationTitle("Today")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: {
+                        isShowingAddSheet = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $isShowingAddSheet) {
+                AddMedicationView()
+            }
         }
     }
 }

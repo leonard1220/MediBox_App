@@ -1,4 +1,4 @@
-import SwiftUI
+import SwiftData
 
 @main
 struct MediBoxApp: App {
@@ -6,5 +6,6 @@ struct MediBoxApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Medication.self)
     }
 }
