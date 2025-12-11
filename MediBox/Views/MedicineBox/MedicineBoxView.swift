@@ -2,7 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct MedicineBoxView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Compartment.id) private var compartments: [Compartment]
+    @Query private var allSchedules: [Schedule] // Query to observe ALL schedules for change detection
     
     var body: some View {
         NavigationStack {
@@ -26,6 +28,12 @@ struct CompartmentRow: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var compartment: Compartment
     @State private var isExpanded: Bool = false
+    @State private var refreshTrigger: UUID = UUID() // Force refresh on add/remove
+    
+    // Computed property for sorted schedules
+    private var sortedSchedules: [Schedule] {
+        compartment.schedules.sorted { $0.time < $1.time }
+    }
     
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -104,7 +112,7 @@ struct CompartmentRow: View {
                 // Scheduled Times
                 VStack(alignment: .leading) {
                     HStack {
-                        Text("Scheduled Times")
+                        Text("Scheduled Times (\(compartment.schedules.count))")
                             .font(.caption)
                             .foregroundColor(.gray)
                         Spacer()
@@ -112,12 +120,14 @@ struct CompartmentRow: View {
                             addTime()
                         }) {
                             Image(systemName: "plus.circle.fill")
+                                .font(.title2)
                                 .foregroundColor(.cyan)
                         }
+                        .buttonStyle(.plain) // Ensure button is tappable in List
                     }
                     
-                    // Iterate over the relationship array
-                    ForEach(compartment.schedules.sorted(by: { $0.time < $1.time })) { schedule in
+                    // Use ID to force refresh when schedules change
+                    ForEach(sortedSchedules) { schedule in
                         HStack {
                             DatePicker(
                                 "Time",
@@ -135,8 +145,10 @@ struct CompartmentRow: View {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .id(refreshTrigger) // Force ForEach to re-render when trigger changes
                 }
             }
             .padding(.vertical, 8)
@@ -163,30 +175,42 @@ struct CompartmentRow: View {
                 }
             }
         }
-        .accentColor(.cyan) // Chevron color
-        .listRowBackground(Color(hue: 0, saturation: 0, brightness: 0.1)) // Dark row background
+        .accentColor(.cyan)
+        .listRowBackground(Color(hue: 0, saturation: 0, brightness: 0.1))
     }
     
     private func addTime() {
+        // Create and insert
         let newSchedule = Schedule(time: Date())
-        modelContext.insert(newSchedule)
         newSchedule.compartment = compartment
-        // Relationship update happens automatically or via direct append
+        modelContext.insert(newSchedule)
+        
+        // Append to relationship
         compartment.schedules.append(newSchedule)
+        
+        // Force UI refresh
+        refreshTrigger = UUID()
+        
+        // Debug print
+        print("Added schedule. Total: \(compartment.schedules.count)")
     }
     
     private func removeTime(_ schedule: Schedule) {
-        // Remove from relationship first for UI consistency
-        if let index = compartment.schedules.firstIndex(where: { $0.id == schedule.id }) {
-             compartment.schedules.remove(at: index)
-        }
-        // Then delete from context
+        // Remove from relationship
+        compartment.schedules.removeAll { $0.id == schedule.id }
+        
+        // Delete from context
         modelContext.delete(schedule)
+        
+        // Force UI refresh
+        refreshTrigger = UUID()
+        
+        print("Removed schedule. Total: \(compartment.schedules.count)")
     }
 }
 
 #Preview {
     MedicineBoxView()
         .preferredColorScheme(.dark)
-        .modelContainer(for: Compartment.self, inMemory: true)
+        .modelContainer(for: [Compartment.self, Schedule.self], inMemory: true)
 }
