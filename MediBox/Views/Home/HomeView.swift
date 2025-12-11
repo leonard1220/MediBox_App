@@ -22,10 +22,21 @@ struct HomeView: View {
     @State private var simulatedTakenCount: Int = 0
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
-    // Neon Colors
-    let neonBlue = Color(red: 0, green: 1, blue: 1)
-    let neonRed = Color(red: 1, green: 0.2, blue: 0.2)
-    let neonYellow = Color(red: 1, green: 1, blue: 0)
+    // Premium Colors
+    let techGradient = LinearGradient(
+        colors: [Color(red: 0, green: 0.79, blue: 1.0), Color(red: 0, green: 0.36, blue: 0.92)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    let alertColor = Color(red: 1, green: 0.8, blue: 0.0) // Deep Yellow
+    
+    // Background Gradient
+    let backgroundGradient = RadialGradient(
+        gradient: Gradient(colors: [Color(white: 0.1), .black]),
+        center: .center,
+        startRadius: 50,
+        endRadius: 600
+    )
     
     private var allDoses: [ScheduledDose] {
         var doses: [ScheduledDose] = []
@@ -56,180 +67,219 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
+            // Background
+            backgroundGradient
+                .ignoresSafeArea()
             
-            VStack(spacing: 30) {
-                // 1. Clock
-                VStack(spacing: 12) {
-                    HStack {
-                         Spacer()
-                         Button(action: {
-                             simulatedTakenCount = 0
-                         }) {
-                             Image(systemName: "arrow.counterclockwise")
-                                 .font(.title2)
-                                 .foregroundColor(.gray)
-                                 .padding(.trailing, 20)
-                         }
+            VStack(spacing: 25) {
+                // 1. Header & Reset
+                HStack {
+                    Text("TODAY'S SCHEDULE")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .tracking(2.0)
+                        .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        withAnimation {
+                            simulatedTakenCount = 0
+                        }
+                    }) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.gray.opacity(0.8))
+                            .padding(8)
+                            .background(Color.white.opacity(0.05))
+                            .clipShape(Circle())
                     }
-                    .padding(.top, 10)
-                    
-                    Text(currentTime, style: .time)
-                        .font(.system(size: 60, weight: .thin, design: .monospaced))
-                        .foregroundColor(.white)
-                        .shadow(color: .white.opacity(0.3), radius: 10)
-                    
-                    Text(dateString(from: currentTime))
-                        .font(.title3)
-                        .foregroundColor(.gray)
                 }
-                .padding(.top, 10)
+                .padding(.horizontal, 30)
+                .padding(.top, 20)
                 
-                // 2. Next Dose Info
-                VStack(spacing: 8) {
-                    Text(isCompleted ? "All Done For Today" : "Next scheduled dose:")
-                        .font(.headline)
-                        .foregroundColor(.gray)
+                // 2. High-Tech Clock
+                VStack(spacing: 5) {
+                    Text(currentTime, style: .time)
+                        .font(.system(size: 70, weight: .medium, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .white.opacity(0.1), radius: 10)
                     
-                    if isCompleted {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(neonBlue)
-                            .shadow(color: neonBlue, radius: 10)
-                    } else if let next = nextDose {
-                        VStack(spacing: 4) {
-                            Text(next.time, style: .time)
-                                .font(.system(size: 40, weight: .bold))
-                                .foregroundColor(neonRed)
-                                .shadow(color: neonRed, radius: 10)
-                            
-                            HStack {
-                                Text(next.compartment.medicationName ?? "Compartment \(next.compartment.id)")
+                    Text(dateString(from: currentTime).uppercased())
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .tracking(1.5)
+                        .foregroundColor(.blue.opacity(0.8))
+                }
+                
+                // 3. Next Dose Card
+                VStack(alignment: .leading, spacing: 15) {
+                    Text(isCompleted ? "STATUSREPORT" : "NEXT DOSE")
+                        .font(.caption2)
+                        .fontWeight(.heavy)
+                        .foregroundColor(.gray)
+                        .tracking(2.0)
+                        .padding(.leading, 5)
+                    
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(Color(white: 0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .stroke(LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+                        
+                        if isCompleted {
+                            VStack(spacing: 15) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 50))
+                                    .foregroundStyle(techGradient)
+                                    .shadow(color: Color.blue.opacity(0.5), radius: 20)
+                                
+                                Text("All doses completed")
                                     .font(.headline)
                                     .foregroundColor(.white)
-                                
-                                if next.compartment.instruction != .none {
-                                    Text("• \(next.compartment.instruction.rawValue)")
-                                        .font(.headline)
-                                        .foregroundColor(neonBlue)
-                                        .shadow(color: neonBlue, radius: 5)
-                                }
                             }
-                            
-                            Text("in " + timeUntil(next.time))
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                            .padding(30)
+                        } else if let next = nextDose {
+                            HStack(alignment: .center, spacing: 20) {
+                                // Time Column
+                                VStack(spacing: 0) {
+                                    Text(next.time, style: .time)
+                                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                        .foregroundColor(.white)
+                                    
+                                    Text(timeUntil(next.time))
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(next.time < currentTime ? .red : .gray)
+                                        .padding(.top, 4)
+                                }
+                                .frame(width: 80)
+                                
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.1))
+                                    .frame(width: 1, height: 40)
+                                
+                                // Info Column
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(next.compartment.medicationName ?? "Compartment \(next.compartment.id)")
+                                        .font(.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                    
+                                    if next.compartment.instruction != .none {
+                                        Text(next.compartment.instruction.rawValue.uppercased())
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(techGradient.opacity(0.2))
+                                            .cornerRadius(6)
+                                            .foregroundStyle(techGradient)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(25)
+                        } else {
+                            VStack(spacing: 10) {
+                                Image(systemName: "moon.stars.fill")
+                                    .font(.title)
+                                    .foregroundColor(.gray)
+                                Text("No remaining schedule")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(30)
                         }
-                    } else {
-                        Text("--:--")
-                            .font(.system(size: 40, weight: .bold))
-                            .foregroundColor(.gray)
-                        Text("No schedule")
-                            .font(.caption)
-                            .foregroundColor(.gray)
                     }
+                    .frame(height: 140)
                 }
+                .padding(.horizontal, 20)
                 
-                // 3. Interactive Progress Widget
-                VStack(spacing: 20) {
-                    if isCompleted {
-                        Text("COMPLETED")
-                            .font(.title2)
-                            .fontWeight(.black)
-                            .foregroundColor(neonBlue)
-                            .shadow(color: neonBlue, radius: 10)
-                            .transition(.scale.combined(with: .opacity))
+                // 4. Light Bar Progress
+                VStack(spacing: 15) {
+                    HStack {
+                        Text("DAILY PROGRESS")
+                            .font(.caption2)
+                            .fontWeight(.heavy)
+                            .foregroundColor(.gray)
+                            .tracking(2.0)
+                        Spacer()
+                        Text("\(simulatedTakenCount) / \(max(allDoses.count, 1))")
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 25)
                     
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
-                            // Background/Border
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(lineWidth: 2)
-                                .foregroundColor(.gray.opacity(0.3))
+                            // Track
+                            Capsule()
+                                .fill(Color.black)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                )
                             
-                            // Progress Bar
-                            HStack(spacing: 0) {
-                                // Taken portion (Blue)
-                                if simulatedTakenCount > 0 {
-                                    Rectangle()
-                                        .fill(neonBlue)
-                                        .frame(width: calculateWidth(totalWidth: geometry.size.width, type: .taken))
-                                        .shadow(color: neonBlue, radius: 8)
-                                }
-                                
-                                // Untaken portion (Red)
-                                if (allDoses.count - simulatedTakenCount) > 0 {
-                                    Rectangle()
-                                        .fill(neonRed)
-                                        .frame(width: calculateWidth(totalWidth: geometry.size.width, type: .untaken))
-                                        .shadow(color: neonRed, radius: 8)
-                                }
-                            }
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            
-                            // Outer Ring for Completed State
-                            if isCompleted {
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(neonBlue, lineWidth: 4)
-                                    .padding(-10)
-                                    .shadow(color: neonBlue, radius: 15)
+                            // Fill
+                            if allDoses.count > 0 {
+                                let progress = CGFloat(simulatedTakenCount) / CGFloat(allDoses.count)
+                                Capsule()
+                                    .fill(techGradient)
+                                    .frame(width: max(0, geometry.size.width * progress))
+                                    .shadow(color: Color.blue.opacity(0.6), radius: 10, x: 0, y: 0)
+                                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: simulatedTakenCount)
                             }
                         }
                     }
-                    .frame(height: 60)
-                    .padding(.horizontal, 40)
+                    .frame(height: 16)
+                    .padding(.horizontal, 25)
                     .onTapGesture {
                         takeDoseAction()
                     }
                     
-                    Text("Tap bar to simulate taking dose")
-                        .font(.caption)
-                        .foregroundColor(.gray.opacity(0.5))
+                    Text("Tap to log dose")
+                        .font(.caption2)
+                        .foregroundColor(.gray.opacity(0.4))
                 }
                 
                 Spacer()
                 
-                // 4. Alerts Section
+                // 5. Alerts
                 if !lowStockCompartments.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Image(systemName: "bell.fill")
-                                .foregroundColor(neonYellow)
-                            Text("Alerts")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 15) {
-                                ForEach(lowStockCompartments) { compartment in
-                                    HStack {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundColor(.black)
-                                            .frame(width: 30, height: 30)
-                                            .background(neonYellow)
-                                            .clipShape(Circle())
-                                        
-                                        VStack(alignment: .leading) {
-                                            Text(compartment.medicationName ?? "Compartment \(compartment.id)")
-                                                .font(.caption)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.black)
-                                            Text("Low Stock (\(compartment.currentQuantity) remaining)")
-                                                .font(.caption2)
-                                                .foregroundColor(.black)
-                                        }
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(lowStockCompartments) { compartment in
+                                HStack(spacing: 12) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(alertColor)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(compartment.medicationName ?? "Compartment \(compartment.id)")
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                        Text("Low Stock (\(compartment.currentQuantity))")
+                                            .font(.caption2)
+                                            .foregroundColor(.gray)
                                     }
-                                    .padding()
-                                    .background(neonYellow.opacity(0.8))
-                                    .cornerRadius(10)
-                                    .shadow(color: neonYellow.opacity(0.5), radius: 5)
                                 }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .background(Color(white: 0.15))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(alertColor.opacity(0.3), lineWidth: 1)
+                                )
                             }
-                            .padding(.horizontal)
                         }
+                        .padding(.horizontal, 25)
                     }
                     .padding(.bottom, 20)
                 }
@@ -242,36 +292,19 @@ struct HomeView: View {
     
     // MARK: - Logic Helpers
     
-    enum ProgressType {
-        case taken, untaken
-    }
-    
-    private func calculateWidth(totalWidth: CGFloat, type: ProgressType) -> CGFloat {
-        let total = max(allDoses.count, 1)
-        let taken = simulatedTakenCount
-        let unitWidth = totalWidth / CGFloat(total)
-        
-        switch type {
-        case .taken:
-            return unitWidth * CGFloat(taken)
-        case .untaken:
-            return unitWidth * CGFloat(total - taken)
-        }
-    }
-    
     private func takeDoseAction() {
         guard !isCompleted else { return }
         
-        // 1. Identify current dose to take
         let doseToTake = allDoses[simulatedTakenCount]
-        
-        // 2. Decrement inventory
         let compartment = doseToTake.compartment
+        
         if compartment.currentQuantity > 0 {
             compartment.currentQuantity -= 1
         }
         
-        // 3. Update simulation state
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
         withAnimation(.spring()) {
             simulatedTakenCount += 1
         }
@@ -287,7 +320,7 @@ struct HomeView: View {
     private func timeUntil(_ date: Date) -> String {
         let diff = date.timeIntervalSince(currentTime)
         if diff < 0 {
-            return "Overdue"
+            return "NOW"
         }
         let hours = Int(diff) / 3600
         let minutes = (Int(diff) % 3600) / 60
@@ -300,11 +333,8 @@ struct HomeView: View {
     
     private func dateString(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d" // e.g. "Monday, Oct 23"
-        
-        // Check if today
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
+        formatter.dateFormat = "EEEE, MMM d"
+        if Calendar.current.isDateInToday(date) {
             return "Today, " + formatter.string(from: date)
         }
         return formatter.string(from: date)
