@@ -9,7 +9,7 @@ struct ContentView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("Today", systemImage: "house.fill")
                 }
             
             MedicineBoxView()

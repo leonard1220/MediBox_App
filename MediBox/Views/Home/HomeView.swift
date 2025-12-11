@@ -74,7 +74,7 @@ struct HomeView: View {
                 
                 // 2. Next Dose Info
                 VStack(spacing: 8) {
-                    Text(isCompleted ? "All Done For Today" : "Next Arranged Dose")
+                    Text(isCompleted ? "All Done For Today" : "Next scheduled dose:")
                         .font(.headline)
                         .foregroundColor(.gray)
                     
@@ -204,7 +204,7 @@ struct HomeView: View {
                                                 .font(.caption)
                                                 .fontWeight(.bold)
                                                 .foregroundColor(.black)
-                                            Text("Low Stock: \(compartment.currentQuantity)")
+                                            Text("Low Stock (\(compartment.currentQuantity) remaining)")
                                                 .font(.caption2)
                                                 .foregroundColor(.black)
                                         }
@@ -287,8 +287,13 @@ struct HomeView: View {
     
     private func dateString(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
+        formatter.dateFormat = "EEEE, MMM d" // e.g. "Monday, Oct 23"
+        
+        // Check if today
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today, " + formatter.string(from: date)
+        }
         return formatter.string(from: date)
     }
 }

@@ -57,7 +57,7 @@ struct CompartmentRow: View {
                 
                 // Instruction
                 VStack(alignment: .leading) {
-                    Text("Instruction / 指导")
+                    Text("Instruction")
                         .font(.caption)
                         .foregroundColor(.gray)
                     Picker("Instruction", selection: Bindable(compartment).instruction) {
@@ -72,24 +72,28 @@ struct CompartmentRow: View {
                 
                 // Inventory Management
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Inventory / 库存")
+                    Text("Current Stock")
                         .font(.caption)
                         .foregroundColor(.gray)
                     
                     HStack {
                         Image(systemName: "pills.circle.fill")
                             .foregroundColor(.orange)
-                        Text("Current Stock: \(compartment.currentQuantity)")
+                        Text("\(compartment.currentQuantity)")
                             .foregroundColor(.white)
                         Spacer()
                         Stepper("", value: Bindable(compartment).currentQuantity, in: 0...999)
                             .labelsHidden()
                     }
                     
+                    Text("Low Stock Alert Threshold")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.yellow)
-                        Text("Alert Threshold: \(compartment.lowStockThreshold)")
+                        Text("\(compartment.lowStockThreshold)")
                             .foregroundColor(.white)
                         Spacer()
                         Stepper("", value: Bindable(compartment).lowStockThreshold, in: 0...100)
